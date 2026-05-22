@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id            String          @id @default(cuid())
+  githubId      String          @unique
+  username      String
+  avatarUrl     String?
+  email         String?
+  createdAt     DateTime        @default(now())
+  installations Installation[]
+  reviews       Review[]
+}
+
+model Installation {
+  id           Int          @id
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  accountLogin String
+  accountType  String
+  repositories Repository[]
+  createdAt    DateTime     @default(now())
+}
+
+model Repository {
+  id             Int          @id
+  installationId Int
+  installation   Installation @relation(fields: [installationId], references: [id])
+  fullName       String
+  private        Boolean
+  reviews        Review[]
+  createdAt      DateTime     @default(now())
+}
+
+model Review {
+  id            String       @id @default(cuid())
+  repositoryId  Int
+  repository    Repository   @relation(fields: [repositoryId], references: [id])
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  prNumber      Int
+  prTitle       String
+  prUrl         String
+  headSha       String
+  status        ReviewStatus
+  summary       String?
+  praise        String?
+  totalBugs     Int          @default(0)
+  criticalCount Int          @default(0)
+  highCount     Int          @default(0)
+  mediumCount   Int          @default(0)
+  lowCount      Int          @default(0)
+  bugs          Bug[]
+  createdAt     DateTime     @default(now())
+  completedAt   DateTime?
+}
+
+model Bug {
+  id         String    @id @default(cuid())
+  reviewId   String
+  review     Review    @relation(fields: [reviewId], references: [id])
+  filename   String
+  line       Int
+  severity   Severity
+  message    String
+  suggestion String
+}
+
+enum ReviewStatus {
+  in_progress
+  completed
+  failed
+}
+
+enum Severity {
+  critical
+  high
+  medium
+  low
+}
